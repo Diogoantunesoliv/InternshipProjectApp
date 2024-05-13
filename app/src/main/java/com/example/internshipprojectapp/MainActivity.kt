@@ -20,9 +20,14 @@ import com.example.internshipprojectapp.Login.LoginScreen
 import com.example.internshipprojectapp.Navegacao.BlankScreen
 import com.example.internshipprojectapp.ui.theme.InternshipProjectAppTheme
 import android.Manifest
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 class MainActivity : ComponentActivity() {
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+    private val fusedLocationClient: FusedLocationProviderClient by lazy {
+        LocationServices.getFusedLocationProviderClient(this)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -59,6 +64,7 @@ class MainActivity : ComponentActivity() {
                                     requestLocationPermission()
                                 },
                                 onGetLocationResult = {
+                                    getLocation()
                                 }
                             )
                         }
@@ -87,6 +93,44 @@ class MainActivity : ComponentActivity() {
                 LOCATION_PERMISSION_REQUEST_CODE
             )
             Log.d("Permissao", "Solicitando permissão de localização...")
+        }
+    }
+
+    private fun getLocation() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Log.d("Location", "Permissões de localização não concedidas. Solicitando permissões...")
+            requestLocationPermission()
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            if (location != null) {
+
+                val latitude = location.latitude
+                val longitude = location.longitude
+                Log.d("Location", "Latitude: $latitude, Longitude: $longitude")
+
+                Toast.makeText(
+                    this,
+                    "Latitude: $latitude, Longitude: $longitude",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+
+                Log.e("Location", "Unable to retrieve current location.")
+                Toast.makeText(
+                    this,
+                    "Não foi possível obter a localização atual.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 }
