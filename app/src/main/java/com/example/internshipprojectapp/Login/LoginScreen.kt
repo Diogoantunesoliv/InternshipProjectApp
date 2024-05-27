@@ -1,28 +1,14 @@
 package com.example.internshipprojectapp.Login
 
+import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -32,6 +18,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.internshipprojectapp.R
+import com.example.internshipprojectapp.Network.LoginRequest
+import com.example.internshipprojectapp.Network.LoginResponse
+import com.example.internshipprojectapp.Network.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @Composable
 fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Unit) {
@@ -49,7 +41,10 @@ fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Un
         Image(
             painter = image,
             contentDescription = "Descrição da imagem",
-            modifier = Modifier.width(250.dp).height(250.dp).padding(vertical = 45.dp)
+            modifier = Modifier
+                .width(250.dp)
+                .height(250.dp)
+                .padding(vertical = 45.dp)
         )
         Text(
             text = "Login",
@@ -95,8 +90,7 @@ fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Un
             onClick = {
                 val email = emailState.value
                 val password = passwordState.value
-                val isLoginValid = email == "ola@gmail.com" && password == "123"
-                onLoginResult(isLoginValid)
+                performLogin(email, password, onLoginResult)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -107,4 +101,32 @@ fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Un
     }
 }
 
+fun performLogin(username: String, password: String, onLoginResult: (Boolean) -> Unit) {
+    val apiService = RetrofitClient.api
+    val loginRequest = LoginRequest(username, password)
+
+    apiService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
+        override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+            if (response.isSuccessful && response.body() != null) {
+                val token = response.body()?.token
+                if (!token.isNullOrEmpty()) {
+                    Log.d("Login", "Login successful, token: $token")
+                    // Armazene o token
+                    onLoginResult(true)
+                } else {
+                    Log.d("Login", "Login failed: token is null or empty")
+                    onLoginResult(false)
+                }
+            } else {
+                Log.d("Login", "Login failed: response not successful or body is null")
+                onLoginResult(false)
+            }
+        }
+
+        override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+            Log.e("Login", "Error: ${t.message}")
+            onLoginResult(false)
+        }
+    })
+}
 

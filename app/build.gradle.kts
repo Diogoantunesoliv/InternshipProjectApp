@@ -72,4 +72,18 @@ dependencies {
     implementation("com.google.android.material:material:1.1.0")
     androidTestImplementation ("androidx.test.espresso:espresso-core:3.5.1")
     implementation ("androidx.compose.material:material-icons-extended:1.6.1")
+    //Retrofit
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.9.0")
+    //Moshi
+    implementation("com.squareup.moshi:moshi:1.14.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
+    //OkHttp Interceptor
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    //Live Data
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
+    //Compose ViewModel
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
 }
