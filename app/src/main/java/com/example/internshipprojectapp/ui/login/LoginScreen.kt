@@ -1,4 +1,4 @@
-package com.example.internshipprojectapp.Login
+package com.example.internshipprojectapp.ui.login
 
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -18,9 +18,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.internshipprojectapp.R
-import com.example.internshipprojectapp.Network.LoginRequest
-import com.example.internshipprojectapp.Network.LoginResponse
-import com.example.internshipprojectapp.Network.RetrofitClient
+import androidx.compose.runtime.Composable
+import com.example.internshipprojectapp.data.model.LoginRequest
+import com.example.internshipprojectapp.data.model.LoginResponse
+import com.example.internshipprojectapp.data.network.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
