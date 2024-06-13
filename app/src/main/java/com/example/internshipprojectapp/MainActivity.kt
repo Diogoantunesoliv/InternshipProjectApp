@@ -8,12 +8,16 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -23,9 +27,11 @@ import com.example.internshipprojectapp.ui.main.BlankScreen
 import com.example.internshipprojectapp.ui.theme.InternshipProjectAppTheme
 import com.example.internshipprojectapp.data.network.RetrofitClient
 import com.example.internshipprojectapp.ui.employee.EmployeeListScreen
+import com.example.internshipprojectapp.authentication.AuthenticationHandler
 import com.google.android.gms.location.*
+import java.util.concurrent.Executor
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     private val fusedLocationClient: FusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
@@ -38,9 +44,15 @@ class MainActivity : ComponentActivity() {
         EmployeeRepository(apiService)
     }
 
+    private lateinit var authenticationHandler: AuthenticationHandler
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Inicializar o handler de autenticação
+        authenticationHandler = AuthenticationHandler(this)
+
         setContent {
             InternshipProjectAppTheme {
                 Surface(
@@ -83,7 +95,17 @@ class MainActivity : ComponentActivity() {
                                 repository = employeeRepository,
                                 fusedLocationClient = fusedLocationClient,
                                 onConfirm = { employee ->
-                                    println("Localização igual! Parabéns")
+                                    // Solicitar autenticação antes de confirmar a geolocalização
+                                    authenticationHandler.authenticate(
+                                        onSuccess = {
+                                            Log.d("Geolocalização", "Autenticação bem-sucedida para: ${employee.name}")
+                                            println("Localização igual! Parabéns")
+                                        },
+                                        onError = { error ->
+                                            Log.e("Geolocalização", "Erro de autenticação: $error")
+                                            Toast.makeText(this@MainActivity, error, Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
                                 }
                             )
                         }
@@ -115,8 +137,12 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+        // Forçar atualização da localização
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY, 10000
+        ).setWaitForAccurateLocation(false)
             .setMinUpdateIntervalMillis(5000)
+            .setMaxUpdateDelayMillis(10000)
             .build()
 
         val locationCallback = object : LocationCallback() {

@@ -85,4 +85,6 @@ dependencies {
     implementation ("com.squareup.okhttp3:logging-interceptor:4.11.0")
     //Live Data
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
+    //Biometric
+    implementation ("androidx.biometric:biometric-ktx:1.2.0-alpha05")
 }
