@@ -87,4 +87,5 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
     //Biometric
     implementation ("androidx.biometric:biometric-ktx:1.2.0-alpha05")
+    implementation ("com.google.android.material:material:1.4.0")
 }

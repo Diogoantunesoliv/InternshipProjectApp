@@ -1,7 +1,8 @@
 package com.example.internshipprojectapp.authentication
 
 import android.content.Context
-import android.widget.Toast
+import android.os.Build
+import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -39,5 +40,19 @@ class BiometricHelper(private val context: Context) {
 
     fun authenticate() {
         biometricPrompt.authenticate(promptInfo)
+    }
+
+    fun isFaceIdAvailable(): Boolean {
+        val biometricManager = BiometricManager.from(context)
+        return biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+    }
+
+    fun isFaceUnlockAvailable(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val biometricManager = BiometricManager.from(context)
+            biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) == BiometricManager.BIOMETRIC_SUCCESS
+        } else {
+            false
+        }
     }
 }
