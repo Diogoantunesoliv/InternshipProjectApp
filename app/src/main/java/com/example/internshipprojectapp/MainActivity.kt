@@ -1,5 +1,6 @@
 package com.example.internshipprojectapp
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -13,7 +14,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -21,14 +21,9 @@ import com.example.internshipprojectapp.ui.login.LoginScreen
 import com.example.internshipprojectapp.data.repository.EmployeeRepository
 import com.example.internshipprojectapp.ui.main.BlankScreen
 import com.example.internshipprojectapp.ui.theme.InternshipProjectAppTheme
-import android.Manifest
-import androidx.activity.viewModels
-import com.example.internshipprojectapp.data.network.ApiService
 import com.example.internshipprojectapp.data.network.RetrofitClient
-import com.example.internshipprojectapp.viewmodel.MainViewModel
-import com.example.internshipprojectapp.viewmodel.MainViewModelFactory
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.example.internshipprojectapp.ui.employee.EmployeeListScreen
+import com.google.android.gms.location.*
 
 class MainActivity : ComponentActivity() {
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
@@ -41,10 +36,6 @@ class MainActivity : ComponentActivity() {
     }
     private val employeeRepository by lazy {
         EmployeeRepository(apiService)
-    }
-
-    private val viewModel: MainViewModel by viewModels {
-        MainViewModelFactory(employeeRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,7 +67,6 @@ class MainActivity : ComponentActivity() {
                         composable("blankScreen") {
                             BlankScreen(
                                 navController = navController,
-                                viewModel = viewModel,
                                 onLogout = {
                                     Log.d("Sistema-entrar", "Logout efetuado com sucesso")
                                 },
@@ -85,9 +75,15 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onGetLocationResult = {
                                     getLocation()
-                                },
-                                onGetEmployees = {
-                                    viewModel.fetchEmployees()
+                                }
+                            )
+                        }
+                        composable("employee_list") {
+                            EmployeeListScreen(
+                                repository = employeeRepository,
+                                fusedLocationClient = fusedLocationClient,
+                                onConfirm = { employee ->
+                                    println("Localização igual! Parabéns")
                                 }
                             )
                         }
@@ -116,6 +112,36 @@ class MainActivity : ComponentActivity() {
                 Log.d("Sistema-Localização", "Latitude: ${it.latitude}, Longitude: ${it.longitude}")
             } ?: run {
                 Log.d("Sistema-Localização", "Localização não disponível")
+            }
+        }
+
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+            .setMinUpdateIntervalMillis(5000)
+            .build()
+
+        val locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult.lastLocation?.let {
+                    Log.d("Sistema-Localização-Atualizada", "Latitude: ${it.latitude}, Longitude: ${it.longitude}")
+                }
+                fusedLocationClient.removeLocationUpdates(this)
+            }
+        }
+
+        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                getLocation()
+            } else {
+                Toast.makeText(this, "Permissão de localização negada", Toast.LENGTH_SHORT).show()
             }
         }
     }

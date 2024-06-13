@@ -1,7 +1,6 @@
 package com.example.internshipprojectapp.data.repository
 
 import com.example.internshipprojectapp.data.model.Employee
-import com.example.internshipprojectapp.data.model.EmployeesResponse
 import com.example.internshipprojectapp.data.network.ApiService
 import retrofit2.Call
 import retrofit2.Callback
