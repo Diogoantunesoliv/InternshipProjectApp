@@ -88,4 +88,6 @@ dependencies {
     //Biometric
     implementation ("androidx.biometric:biometric-ktx:1.2.0-alpha05")
     implementation ("com.google.android.material:material:1.4.0")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
 }

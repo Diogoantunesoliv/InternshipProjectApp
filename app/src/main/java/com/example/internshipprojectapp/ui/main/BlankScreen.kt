@@ -40,14 +40,14 @@ fun BlankScreen(
                 Text(text = "Solicitar Permissão de Localização")
             }
 
-            Button(
+            /*Button(
                 onClick = {
                     onGetLocationResult()
                 },
                 modifier = Modifier.padding(top = 16.dp)
             ) {
                 Text(text = "Obter Localização")
-            }
+            }*/
 
             Button(
                 onClick = {

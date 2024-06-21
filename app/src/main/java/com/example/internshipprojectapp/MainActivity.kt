@@ -5,9 +5,9 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -23,10 +23,9 @@ import com.example.internshipprojectapp.ui.main.BlankScreen
 import com.example.internshipprojectapp.ui.theme.InternshipProjectAppTheme
 import com.example.internshipprojectapp.data.network.RetrofitClient
 import com.example.internshipprojectapp.ui.employee.EmployeeListScreen
-import com.example.internshipprojectapp.authentication.AuthenticationHandler
 import com.google.android.gms.location.*
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     private val fusedLocationClient: FusedLocationProviderClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
@@ -39,14 +38,9 @@ class MainActivity : ComponentActivity() {
         EmployeeRepository(apiService)
     }
 
-    private lateinit var authenticationHandler: AuthenticationHandler
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        // Inicializar o handler de autenticação
-        authenticationHandler = AuthenticationHandler(this)
 
         setContent {
             InternshipProjectAppTheme {
@@ -76,6 +70,7 @@ class MainActivity : ComponentActivity() {
                                 navController = navController,
                                 onLogout = {
                                     Log.d("Sistema-entrar", "Logout efetuado com sucesso")
+                                    navController.navigate("LoginScreen")
                                 },
                                 onGetLocationPermission = {
                                     requestLocationPermission()
@@ -87,20 +82,12 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("employee_list") {
                             EmployeeListScreen(
+                                navController = navController,
                                 repository = employeeRepository,
                                 fusedLocationClient = fusedLocationClient,
                                 onConfirm = { employee ->
-                                    // Solicitar autenticação antes de confirmar a geolocalização
-                                    authenticationHandler.authenticate(
-                                        onSuccess = {
-                                            Log.d("Geolocalização", "Autenticação bem-sucedida para: ${employee.name}")
-                                            println("Localização igual! Parabéns")
-                                        },
-                                        onError = { error ->
-                                            Log.e("Geolocalização", "Erro de autenticação: $error")
-                                            Toast.makeText(this@MainActivity, error, Toast.LENGTH_SHORT).show()
-                                        }
-                                    )
+                                    Log.d("Geolocalização", "Localização confirmada para: ${employee.name}")
+                                    println("Localização igual! Parabéns")
                                 }
                             )
                         }
@@ -153,9 +140,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
+        requestCode: Int, permissions: Array<String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {

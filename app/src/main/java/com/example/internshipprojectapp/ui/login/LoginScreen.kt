@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -18,13 +19,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.internshipprojectapp.R
-import androidx.compose.runtime.Composable
 import com.example.internshipprojectapp.data.model.LoginRequest
-import com.example.internshipprojectapp.data.model.LoginResponse
 import com.example.internshipprojectapp.data.network.RetrofitClient
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Unit) {
@@ -32,6 +29,8 @@ fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Un
     val passwordState = remember { mutableStateOf("") }
     val image = painterResource(id = R.drawable.nclock)
     var passwordVisibility by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -42,10 +41,7 @@ fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Un
         Image(
             painter = image,
             contentDescription = "Descrição da imagem",
-            modifier = Modifier
-                .width(250.dp)
-                .height(250.dp)
-                .padding(vertical = 45.dp)
+            modifier = Modifier.width(250.dp).height(250.dp).padding(vertical = 45.dp)
         )
         Text(
             text = "Login",
@@ -91,7 +87,9 @@ fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Un
             onClick = {
                 val email = emailState.value
                 val password = passwordState.value
-                performLogin(email, password, onLoginResult)
+                coroutineScope.launch {
+                    performLogin(email, password, onLoginResult)
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -102,32 +100,28 @@ fun LoginScreen(navController: NavHostController, onLoginResult: (Boolean) -> Un
     }
 }
 
-fun performLogin(username: String, password: String, onLoginResult: (Boolean) -> Unit) {
+suspend fun performLogin(username: String, password: String, onLoginResult: (Boolean) -> Unit) {
     val apiService = RetrofitClient.api
     val loginRequest = LoginRequest(username, password)
 
-    apiService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
-        override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-            if (response.isSuccessful && response.body() != null) {
-                val token = response.body()?.token
-                if (!token.isNullOrEmpty()) {
-                    Log.d("Login", "Login successful, token: $token")
-                    // Armazene o token
-                    onLoginResult(true)
-                } else {
-                    Log.d("Login", "Login failed: token is null or empty")
-                    onLoginResult(false)
-                }
+    try {
+        val response = apiService.login(loginRequest)
+        if (response.isSuccessful && response.body() != null) {
+            val token = response.body()?.token
+            if (!token.isNullOrEmpty()) {
+                Log.d("Login", "Login successful, token: $token")
+                // Armazene o token
+                onLoginResult(true)
             } else {
-                Log.d("Login", "Login failed: response not successful or body is null")
+                Log.d("Login", "Login failed: token is null or empty")
                 onLoginResult(false)
             }
-        }
-
-        override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-            Log.e("Login", "Error: ${t.message}")
+        } else {
+            Log.d("Login", "Login failed: response not successful or body is null")
             onLoginResult(false)
         }
-    })
+    } catch (e: Exception) {
+        Log.e("Login", "Error: ${e.message}")
+        onLoginResult(false)
+    }
 }
-
